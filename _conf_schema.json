@@ -1,0 +1,2253 @@
+{
+    "whitelist": {
+        "description": "解析白名单",
+        "hint": "请填写会话ID (可用命令sid查看), 一旦添加了白名单，则只有白名单会话发的链接会触发解析，优先级比黑名单高。留空表示不限制",
+        "type": "list",
+        "items": {},
+        "default": []
+    },
+    "blacklist": {
+        "description": "解析黑名单",
+        "hint": "请填写会话ID (可用命令sid查看), 黑名单会话发的链接不会触发解析。可在会话中使用命令 “开启解析” 和 “关闭解析” 来快捷设置",
+        "type": "list",
+        "items": {},
+        "default": []
+    },
+    "user_blacklist": {
+        "description": "用户黑名单",
+        "hint": "填写用户ID（如 QQ 号），黑名单用户发送的链接不会触发解析",
+        "type": "list",
+        "items": {},
+        "default": []
+    },
+    "verbose_logging": {
+        "description": "详细日志",
+        "hint": "开启后，插件会在日志中详细记录每一步操作（匹配、仲裁、防抖、发送计划、转发合并等），方便排查问题",
+        "type": "bool",
+        "default": false
+    },
+    "arbiter": {
+        "description": "仲裁机制",
+        "hint": "仲裁机制：一个确保群内只有一个 Bot 对链接进行解析的机制，利用 QQ 贴表情来实现。关闭后不再贴表情仲裁，适合单 Bot 环境",
+        "type": "bool",
+        "default": true
+    },
+    "enable_private_chat": {
+        "description": "私聊启用解析",
+        "hint": "关闭后，私聊消息不再触发解析",
+        "type": "bool",
+        "default": true
+    },
+    "debounce_interval": {
+        "description": "防抖秒数",
+        "hint": "防抖机制：同一个会话下，防抖时间内不解析那些已经解析过的链接。设为 0 表示不启用防抖机制",
+        "type": "int",
+        "slider": {
+            "min": 0,
+            "max": 600,
+            "step": 10
+        },
+        "default": 300
+    },
+    "link_debounce_strategy": {
+        "description": "链接防抖触发策略",
+        "hint": "当同一会话内相同链接在防抖时间内再次出现时：skip=仅跳过解析（默认，保持原行为）；silent=完全静默不反应；tip=发送下方自定义提示文本",
+        "type": "string",
+        "options": [
+            "skip",
+            "silent",
+            "tip"
+        ],
+        "default": "skip"
+    },
+    "link_debounce_tip_text": {
+        "description": "链接防抖提示文本",
+        "hint": "策略为 tip 时发送的文本。可用占位符：{platform}平台名 {user_name}用户昵称 {user_id}用户ID",
+        "type": "text",
+        "default": "你已经发过一次{platform}链接啦~"
+    },
+    "source_max_size": {
+        "description": "资源最大大小",
+        "hint": "允许下载的音视频最大体积，单位 MB",
+        "type": "int",
+        "slider": {
+            "min": 10,
+            "max": 500,
+            "step": 10
+        },
+        "default": 90
+    },
+    "source_max_minute": {
+        "description": "资源最大时长（分钟）",
+        "hint": "允许下载的音视频最大时长，超过则不解析",
+        "type": "int",
+        "slider": {
+            "min": 1,
+            "max": 60,
+            "step": 1
+        },
+        "default": 15
+    },
+    "video_compress_enable": {
+        "description": "启用视频压缩",
+        "hint": "视频压缩总开关，默认关闭。开启后下载的视频会在发送前自动压缩，减少文件大小",
+        "type": "bool",
+        "default": false
+    },
+    "video_compress_quality_mode": {
+        "description": "压缩品质模式",
+        "hint": "画质优先=更小压缩率但画质更好；平衡=兼顾画质与速度；速度优先=更快压缩、更小文件；自定义=开放下方高级参数",
+        "type": "string",
+        "options": [
+            "quality",
+            "balance",
+            "speed",
+            "custom"
+        ],
+        "default": "balance"
+    },
+    "video_compress_encoder": {
+        "description": "视频编码方式",
+        "hint": "自动检测推荐=根据启动时硬件检测结果选择；CPU软件编码=兼容性最好；GPU硬件加速=需对应显卡和ffmpeg支持；手机端硬件加速=仅Android/Termux环境",
+        "type": "string",
+        "options": [
+            "auto",
+            "cpu",
+            "nvenc",
+            "qsv",
+            "amf",
+            "mediacodec"
+        ],
+        "default": "auto"
+    },
+    "video_send_fast_optimization": {
+        "description": "视频发送快速优化",
+        "hint": "发送前检测视频格式：mp4+h264+aac+faststart 直接发送不调用 ffmpeg；h264+aac 但容器或 faststart 不符时只做快速转封装（不重新编码）；明确检测到 H.265/AV1/VP9 时才转码为 H.264；其它情况回退到原有处理。关闭后完全使用原有逻辑。",
+        "type": "bool",
+        "default": true
+    },
+    "video_merge_faststart": {
+        "description": "合并视频时启用 faststart",
+        "hint": "音视频合并时直接写入 -movflags +faststart，输出文件包含 moov 原子。开启后发送阶段可跳过快速转封装，省 10-13 秒。关闭后保持原有合并逻辑，输出文件不含 faststart。",
+        "type": "bool",
+        "default": true
+    },
+    "video_compress_custom_preset": {
+        "description": "自定义编码速度预设",
+        "hint": "自定义模式下生效。不同编码器会映射到对应预设值",
+        "type": "string",
+        "options": [
+            "ultrafast",
+            "veryfast",
+            "faster",
+            "fast",
+            "medium",
+            "slow",
+            "slower",
+            "veryslow"
+        ],
+        "default": "medium"
+    },
+    "video_compress_custom_resolution": {
+        "description": "自定义输出分辨率",
+        "hint": "自定义模式下生效。可选 original/720p/540p/360p，也可手动输入如 1920x1080",
+        "type": "string",
+        "default": "original"
+    },
+    "video_compress_custom_audio_bitrate": {
+        "description": "自定义音频码率",
+        "hint": "自定义模式下生效",
+        "type": "string",
+        "options": [
+            "32k",
+            "64k",
+            "96k",
+            "128k"
+        ],
+        "default": "128k"
+    },
+    "video_compress_custom_fps": {
+        "description": "自定义输出帧率",
+        "hint": "自定义模式下生效。original=保持原始帧率，也可输入如 30fps",
+        "type": "string",
+        "default": "original"
+    },
+    "video_compress_custom_threads": {
+        "description": "自定义编码线程数",
+        "hint": "自定义模式下且使用 CPU 编码时生效。0=自动，>0=指定线程数",
+        "type": "int",
+        "slider": {
+            "min": 0,
+            "max": 32,
+            "step": 1
+        },
+        "default": 0
+    },
+    "video_compress_custom_bitrate": {
+        "description": "自定义 MediaCodec 视频码率",
+        "hint": "自定义模式下且编码方式为 mediacodec 时生效。例如 2M、4M，留空使用品质模式默认值",
+        "type": "string",
+        "default": ""
+    },
+    "audio_to_file": {
+        "description": "音频以文件形式上传",
+        "hint": "是否将解析到的音频文件用文件形式上传，而不是语音形式",
+        "type": "bool",
+        "default": true
+    },
+    "single_heavy_render_card": {
+        "description": "单条重媒体仍渲染卡片",
+        "hint": "重媒体是指：视频、音频、文件。重媒体下载和发送较为耗时，有需者可以打开此开关让插件先渲染一个信息卡片发出来，追求简洁者请不要开启",
+        "type": "bool",
+        "default": false
+    },
+    "image_render_card": {
+        "description": "纯图片内容渲染卡片",
+        "hint": "开启后，仅含图片/图文（含实况图这类图片+伴生视频组合）的解析结果（如小红书图文、微博图集、快手实况图）也会渲染一张简介卡片，与图片一起发出",
+        "type": "bool",
+        "default": true
+    },
+    "card_bg_image": {
+        "description": "卡片背景图",
+        "hint": "玻璃卡片的自定义背景图，留空使用内置渐变背景。支持绝对路径，或相对于插件数据目录的路径",
+        "type": "string",
+        "default": ""
+    },
+    "card_bg_blur": {
+        "description": "背景图模糊半径",
+        "hint": "自定义背景图的高斯模糊半径（像素），越大越模糊，0 表示不模糊",
+        "type": "int",
+        "slider": {
+            "min": 0,
+            "max": 50,
+            "step": 1
+        },
+        "default": 15
+    },
+    "card_glass_opacity": {
+        "description": "玻璃面板不透明度",
+        "hint": "玻璃面板的白色不透明度百分比，数值越大面板越实，建议 60-80",
+        "type": "int",
+        "slider": {
+            "min": 10,
+            "max": 100,
+            "step": 5
+        },
+        "default": 70
+    },
+    "card_render_mode": {
+        "description": "卡片渲染方案",
+        "hint": "browser=浏览器方案（headless Chromium 渲染设计器版式，需要渲染服务可用，失败自动回退 PIL）；pil=强制使用旧 PIL 方案。版式在插件 core/resources/card_layout.json，改版式需重启插件",
+        "type": "string",
+        "options": [
+            "browser",
+            "pil"
+        ],
+        "default": "browser"
+    },
+    "card_render_url": {
+        "description": "渲染服务地址",
+        "hint": "渲染服务默认与 AstrBot 容器共享网络命名空间，Docker 部署用 http://127.0.0.1:8790/render；宿主机本地部署同样 http://127.0.0.1:8790/render。服务不可用时自动回退 PIL 渲染",
+        "type": "string",
+        "default": "http://127.0.0.1:8790/render"
+    },
+    "render_card": {
+        "description": "渲染卡片",
+        "hint": "卡片渲染总开关，关闭后不再渲染任何简介卡片",
+        "type": "bool",
+        "default": true
+    },
+    "send_parse_text": {
+        "description": "发送解析文本",
+        "hint": "开启后，解析完成会发送解析文本（标题/简介/作者/数据，格式可在下方自定义）。识别到链接后的即时提示由「识别到链接后的行为」独立控制。",
+        "type": "bool",
+        "default": true
+    },
+    "detect_action": {
+        "description": "识别到链接后的行为",
+        "hint": "text=识别到链接后立即发送解析提示文字；emoji=给该消息贴表情；none=静默不反馈。与下方「发送解析文本」互不干扰。",
+        "type": "string",
+        "options": [
+            "text",
+            "emoji",
+            "none"
+        ],
+        "default": "text"
+    },
+    "merge_parsing_tip": {
+        "description": "解析提示合并为套娃",
+        "hint": "开启后，识别到链接时发送的解析提示文字不会单独发出，而是作为合并转发消息的第一个节点与解析结果一起套娃发出（需达到转发阈值）",
+        "type": "bool",
+        "default": false
+    },
+    "quote_on_detect": {
+        "description": "解析提示引用原链接",
+        "hint": "开启text识别反馈时，解析提示文字会引用用户发送的链接消息（QQ平台效果最佳）。仅在解析提示单独发出时生效；合并到套娃时使用下方的「合并引用目标」",
+        "type": "bool",
+        "default": false
+    },
+    "merge_parse_text": {
+        "description": "解析文本合并为套娃",
+        "hint": "开启后，解析完成后的解析文本不再单独发出，而是作为合并转发消息的一个节点与解析结果一起套娃发出（需达到转发阈值）。可与「解析提示合并为套娃」同时开启",
+        "type": "bool",
+        "default": false
+    },
+    "merge_quote_target": {
+        "description": "合并套娃引用目标",
+        "hint": "original=套娃消息引用用户发送的原链接；merged=套娃消息本身不引用原链接，作为独立合并消息发出",
+        "type": "string",
+        "options": [
+            "original",
+            "merged"
+        ],
+        "default": "original"
+    },
+    "at_after_parse": {
+        "description": "解析完成后@用户",
+        "hint": "解析完成后，额外发送一条@用户的消息，内容使用下方自定义文本，并引用用户发送的链接",
+        "type": "bool",
+        "default": false
+    },
+    "at_after_parse_text": {
+        "description": "解析完成后@用户的文本",
+        "hint": "解析完成后@用户时附加的文本。可用占位符：{platform}平台名 {title}标题 {author}作者 {user_name}用户昵称 {user_id}用户ID",
+        "type": "text",
+        "default": "{platform}解析完成啦~"
+    },
+    "detect_delay_min": {
+        "description": "识别反馈最小延时（秒）",
+        "hint": "识别到链接后，执行反馈行为前的随机延时下限",
+        "type": "int",
+        "slider": {
+            "min": 0,
+            "max": 30,
+            "step": 1
+        },
+        "default": 1
+    },
+    "detect_delay_max": {
+        "description": "识别反馈最大延时（秒）",
+        "hint": "识别到链接后，执行反馈行为前的随机延时上限",
+        "type": "int",
+        "slider": {
+            "min": 0,
+            "max": 60,
+            "step": 1
+        },
+        "default": 3
+    },
+    "send_interval_min": {
+        "description": "发送间隔最小值（秒）",
+        "hint": "插件连续发送多条消息（提示、卡片、媒体、解析文本）之间的随机间隔下限",
+        "type": "int",
+        "slider": {
+            "min": 0,
+            "max": 30,
+            "step": 1
+        },
+        "default": 1
+    },
+    "send_interval_max": {
+        "description": "发送间隔最大值（秒）",
+        "hint": "插件连续发送多条消息之间的随机间隔上限",
+        "type": "int",
+        "slider": {
+            "min": 0,
+            "max": 60,
+            "step": 1
+        },
+        "default": 3
+    },
+    "react_emoji_id": {
+        "description": "回应表情ID",
+        "hint": "识别行为为 emoji 时贴的表情 ID（QQ 系统表情），常用：76=赞、124=OK、289=拳头",
+        "type": "int",
+        "default": 76
+    },
+    "parsing_tip": {
+        "description": "解析提示模板",
+        "hint": "识别到链接后先发送的提示文字，可用占位符 {platform}（平台名）",
+        "type": "text",
+        "default": "正在解析{platform}，请稍等"
+    },
+    "parse_text_template": {
+        "description": "解析文本模板",
+        "hint": "解析完成后发送的文本。通用占位符：{platform}平台名 {title}标题 {text}简介 {author}作者 {url}链接 {time}发布时间。统计占位符（平台支持不同，当前解析结果未提供则自动隐藏）：{like}点赞 {favorite}收藏 {comment}评论 {share}转发 {view}播放/阅读 {danmaku}弹幕(B站) {coin}投币(B站) {reply}评论(B站，与comment同义)。支持情况：B站视频(view/danmaku/reply/comment/favorite/coin/share/like)、抖音(like/comment/favorite/share/view)、小红书(like/favorite/comment/share)、微博(like/comment/share)、快手(like/comment/share/view)、视频号(like/favorite/comment/share)。若模板包含当前平台未提供的占位符，日志会输出黄色警告。",
+        "type": "text",
+        "default": "标题:{title}\n简介:{text}\n作者:{author}\n点赞:{like}  收藏:{favorite}\n投币:{coin}  转发:{share}"
+    },
+    "forward_threshold": {
+        "description": "转发阈值",
+        "hint": "硬性要求：解析生成的消息条数达到此阈值时，将消息合并转发",
+        "type": "int",
+        "slider": {
+            "min": 0,
+            "max": 10,
+            "step": 1
+        },
+        "default": 2
+    },
+    "perf_render_thread_pool": {
+        "description": "线程池渲染",
+        "hint": "开启后，Pillow 卡片渲染会在独立线程池中执行，避免阻塞主事件循环，提升并发解析响应速度",
+        "type": "bool",
+        "default": true
+    },
+    "perf_render_cache_enabled": {
+        "description": "智能渲染缓存",
+        "hint": "开启后，相同内容+相同样式配置的卡片只会渲染一次，后续从缓存读取。缓存键基于内容哈希与源文件 mtime，内容或样式变化自动失效",
+        "type": "bool",
+        "default": true
+    },
+    "perf_render_cache_ttl": {
+        "description": "渲染缓存 TTL（秒）",
+        "hint": "渲染缓存的有效期，超过该时间后缓存自动失效。0 表示永不过期",
+        "type": "int",
+        "slider": {
+            "min": 0,
+            "max": 604800,
+            "step": 3600
+        },
+        "default": 86400
+    },
+    "perf_render_cache_max_count": {
+        "description": "渲染缓存最大数量",
+        "hint": "磁盘上最多保留多少张缓存卡片。超过后按 LRU 淘汰最久未使用的缓存",
+        "type": "int",
+        "slider": {
+            "min": 0,
+            "max": 2000,
+            "step": 50
+        },
+        "default": 200
+    },
+    "perf_adaptive_download": {
+        "description": "自适应下载并发",
+        "hint": "开启后，每个平台拥有独立的下载并发信号量；连续下载失败达到阈值时自动降低并发，成功后逐步恢复。默认关闭",
+        "type": "bool",
+        "default": false
+    },
+    "perf_download_default_concurrency": {
+        "description": "默认下载并发数",
+        "hint": "未在解析器中单独设置并发时的默认并发数",
+        "type": "int",
+        "slider": {
+            "min": 1,
+            "max": 20,
+            "step": 1
+        },
+        "default": 3
+    },
+    "perf_download_fail_threshold": {
+        "description": "连续失败降级阈值",
+        "hint": "同一平台连续下载失败多少次后自动降低并发",
+        "type": "int",
+        "slider": {
+            "min": 1,
+            "max": 10,
+            "step": 1
+        },
+        "default": 3
+    },
+    "perf_download_degrade_step": {
+        "description": "每次降级减少并发数",
+        "hint": "触发降级时，并发数减少多少",
+        "type": "int",
+        "slider": {
+            "min": 1,
+            "max": 5,
+            "step": 1
+        },
+        "default": 1
+    },
+    "perf_download_min_concurrency": {
+        "description": "最小下载并发数",
+        "hint": "并发数最低降到多少，避免完全卡死",
+        "type": "int",
+        "slider": {
+            "min": 1,
+            "max": 10,
+            "step": 1
+        },
+        "default": 1
+    },
+    "perf_download_recover_step": {
+        "description": "每次恢复增加并发数",
+        "hint": "下载成功且满足恢复间隔后，并发数增加多少",
+        "type": "int",
+        "slider": {
+            "min": 1,
+            "max": 5,
+            "step": 1
+        },
+        "default": 1
+    },
+    "perf_download_recover_interval": {
+        "description": "并发恢复间隔（秒）",
+        "hint": "两次调整并发之间的最小间隔，避免抖动",
+        "type": "int",
+        "slider": {
+            "min": 10,
+            "max": 600,
+            "step": 10
+        },
+        "default": 60
+    },
+    "dns_prefetch": {
+        "description": "DNS预解析",
+        "hint": "开启后，插件启动时会预解析所有已启用解析器对应平台的域名，可加快首次下载速度。修改后需重启插件生效",
+        "type": "object",
+        "default": {},
+        "items": {
+            "enabled": {
+                "description": "启用DNS预解析",
+                "hint": "DNS预解析总开关",
+                "type": "bool",
+                "default": false
+            },
+            "prefetch_on_startup": {
+                "description": "启动时预解析",
+                "hint": "插件启动时立即执行一次DNS预解析",
+                "type": "bool",
+                "default": false
+            },
+            "periodic_refresh": {
+                "description": "定时刷新",
+                "hint": "按下方间隔周期性重新解析域名",
+                "type": "bool",
+                "default": false
+            },
+            "refresh_interval": {
+                "description": "刷新间隔（秒）",
+                "hint": "定时刷新DNS的间隔",
+                "type": "int",
+                "slider": {
+                    "min": 60,
+                    "max": 3600,
+                    "step": 60
+                },
+                "default": 300
+            }
+        }
+    },
+    "cdn_prefetch_enabled": {
+        "description": "CDN节点优选",
+        "hint": "开启后，下载多个备选URL时先快速测速选择最快节点。仅对B站（多durl/dash节点）和YouTube（yt-dlp formats）生效，文件需>=10MB",
+        "type": "bool",
+        "default": false
+    },
+    "enable_range_download": {
+        "description": "分块并发下载",
+        "hint": "开启后，关闭视频压缩时对大文件使用HTTP Range分块并发下载，可提升大文件下载速度。压缩开启时关闭分块下载",
+        "type": "bool",
+        "default": false
+    },
+    "range_download_max_parts": {
+        "description": "全局最大分块数上限",
+        "hint": "分块并发下载时单文件最多分多少块。实际分块数由文件大小自动分配并取较小值",
+        "type": "int",
+        "slider": {
+            "min": 2,
+            "max": 16,
+            "step": 1
+        },
+        "default": 8
+    },
+    "range_download_max_parts_platforms": {
+        "description": "各平台最大分块数上限",
+        "hint": "按平台名设置分块数上限覆盖全局值，未设置的平台使用全局上限。例如：{\"bilibili\": 4, \"youtube\": 6}",
+        "type": "object",
+        "items": {},
+        "default": {}
+    },
+    "range_memory_fallback_to_single": {
+        "description": "内存不足时回退单连接",
+        "hint": "开启内存自适应后，可用内存不足时直接关闭分块下载（降至1块）。关闭则最低降至2块",
+        "type": "bool",
+        "default": false
+    },
+    "range_merge_threshold_mb": {
+        "description": "内存合并阈值（MB）",
+        "hint": "音视频合并时，文件小于此值直接内存合并；大于等于此值使用流式合并",
+        "type": "int",
+        "slider": {
+            "min": 10,
+            "max": 500,
+            "step": 10
+        },
+        "default": 100
+    },
+    "range_part_timeout": {
+        "description": "单块下载超时（秒）",
+        "hint": "每个分块的最大下载时间",
+        "type": "int",
+        "slider": {
+            "min": 10,
+            "max": 120,
+            "step": 5
+        },
+        "default": 30
+    },
+    "range_total_timeout": {
+        "description": "整体下载超时（秒）",
+        "hint": "整个分块下载任务的最大时间",
+        "type": "int",
+        "slider": {
+            "min": 30,
+            "max": 600,
+            "step": 10
+        },
+        "default": 120
+    },
+    "range_memory_adaptive": {
+        "description": "分块下载内存自适应",
+        "hint": "开启后，根据可用内存自动决定音视频合并策略：文件<可用内存50%内存合并；<80%内存合并但降分块；>=80%流式合并。需安装psutil",
+        "type": "bool",
+        "default": false
+    },
+    "range_memory_reserve_percent": {
+        "description": "内存保留比例（%）",
+        "hint": "内存自适应时保留多少可用内存不用于下载合并",
+        "type": "int",
+        "slider": {
+            "min": 5,
+            "max": 30,
+            "step": 1
+        },
+        "default": 10
+    },
+    "range_memory_auto_disable": {
+        "description": "内存严重不足时自动关闭分块下载",
+        "hint": "开启后，当可用内存低于警告阈值时，分块下载将完全关闭并回退到单连接下载，优先保障系统稳定性。不依赖后台内存监控是否开启",
+        "type": "bool",
+        "default": true
+    },
+    "enable_streaming_compress": {
+        "description": "流式压缩",
+        "hint": "开启视频压缩时生效。使用FFmpeg pipe边下载边压缩，总耗时约等于max(下载时间,压缩时间)。失败自动回退到传统压缩",
+        "type": "bool",
+        "default": false
+    },
+    "video_cache_enabled": {
+        "description": "启用视频下载缓存",
+        "hint": "开启后缓存合并后的完整视频文件，相同URL+文件大小+分辨率+压缩参数直接命中缓存",
+        "type": "bool",
+        "default": false
+    },
+    "video_cache_ttl": {
+        "description": "视频缓存有效期（天）",
+        "hint": "视频缓存保留天数，超过后自动清理",
+        "type": "int",
+        "slider": {
+            "min": 1,
+            "max": 30,
+            "step": 1
+        },
+        "default": 7
+    },
+    "video_cache_max_count": {
+        "description": "视频缓存最大文件数",
+        "hint": "磁盘上最多保留多少个缓存视频，超过后按LRU淘汰",
+        "type": "int",
+        "slider": {
+            "min": 10,
+            "max": 500,
+            "step": 10
+        },
+        "default": 50
+    },
+    "memory_monitor": {
+        "description": "内存监控",
+        "hint": "后台监控系统内存，低内存时自动降低分块数。需安装psutil",
+        "type": "object",
+        "default": {},
+        "items": {
+            "enabled": {
+                "description": "启用内存监控",
+                "hint": "内存监控总开关",
+                "type": "bool",
+                "default": false
+            },
+            "interval": {
+                "description": "检测间隔（秒）",
+                "hint": "多久检测一次内存",
+                "type": "int",
+                "slider": {
+                    "min": 5,
+                    "max": 300,
+                    "step": 5
+                },
+                "default": 30
+            },
+            "warning_threshold": {
+                "description": "警告阈值（%）",
+                "hint": "可用内存低于总内存的该百分比时触发降级",
+                "type": "int",
+                "slider": {
+                    "min": 1,
+                    "max": 50,
+                    "step": 1
+                },
+                "default": 10
+            }
+        }
+    },
+    "show_download_fail_tip": {
+        "description": "提示下载失败项",
+        "hint": "关闭后将不再发送与下载失败相关的提示（如“此项媒体下载失败”、“超过文件大小限制”等）",
+        "type": "bool",
+        "default": true
+    },
+    "download_timeout": {
+        "description": "下载请求超时秒数",
+        "hint": "下载视频、音频等较大文件时的请求超时时间，单位秒。 建议设置大一点，视频、音频较大时下载耗时较长",
+        "type": "int",
+        "slider": {
+            "min": 10,
+            "max": 600,
+            "step": 10
+        },
+        "default": 280
+    },
+    "download_retry_times": {
+        "description": "下载失败重试次数",
+        "hint": "下载失败时，最多重试的次数",
+        "type": "int",
+        "slider": {
+            "min": 0,
+            "max": 5,
+            "step": 1
+        },
+        "default": 2
+    },
+    "download_retry_wait_enabled": {
+        "description": "下载重试等待开关",
+        "hint": "开启后重试按配置的等待时间等待；关闭后失败立即重试不等待，适合追求极致速度的用户",
+        "type": "bool",
+        "default": true
+    },
+    "download_retry_delay_base": {
+        "description": "下载重试基础等待时间（秒）",
+        "hint": "超时、数据不完整等网络抖动错误使用此基础值进行指数退避",
+        "type": "float",
+        "slider": {
+            "min": 0.05,
+            "max": 2,
+            "step": 0.05
+        },
+        "default": 0.3
+    },
+    "download_retry_delay_limit": {
+        "description": "下载重试最大等待时间（秒）",
+        "hint": "重试等待时间的上限",
+        "type": "float",
+        "slider": {
+            "min": 0.1,
+            "max": 10,
+            "step": 0.1
+        },
+        "default": 1.2
+    },
+    "download_concurrency_limit": {
+        "description": "全局同时下载数上限",
+        "hint": "使用 asyncio.Semaphore 限制同时进行的下载任务数量",
+        "type": "int",
+        "slider": {
+            "min": 1,
+            "max": 20,
+            "step": 1
+        },
+        "default": 5
+    },
+    "download_delay_min": {
+        "description": "下载请求间最小延迟（秒）",
+        "hint": "每个请求完成后随机延迟的最小值，用于降低风控概率",
+        "type": "float",
+        "slider": {
+            "min": 0,
+            "max": 1,
+            "step": 0.05
+        },
+        "default": 0.1
+    },
+    "download_delay_max": {
+        "description": "下载请求间最大延迟（秒）",
+        "hint": "每个请求完成后随机延迟的最大值",
+        "type": "float",
+        "slider": {
+            "min": 0,
+            "max": 2,
+            "step": 0.05
+        },
+        "default": 0.3
+    },
+    "download_batch_size": {
+        "description": "小图片批量下载每批数量",
+        "hint": "同一 CDN 上多个小图片分批次下载，每批多少个，批次间延迟 0.2 秒",
+        "type": "int",
+        "slider": {
+            "min": 1,
+            "max": 30,
+            "step": 1
+        },
+        "default": 10
+    },
+    "download_dynamic_concurrency": {
+        "description": "动态调整下载并发数",
+        "hint": "根据最近下载成功率自动调整并发数：成功率>95%逐步增加（最高10），失败率>10%逐步减少（最低2）",
+        "type": "bool",
+        "default": false
+    },
+    "max_concurrent_tasks": {
+        "description": "同时处理链接的最大任务数",
+        "hint": "同一群聊连发多个链接或多个群同时发链接时，超过此数量的链接进入等待队列，有空闲时自动处理",
+        "type": "int",
+        "slider": {
+            "min": 1,
+            "max": 20,
+            "step": 1
+        },
+        "default": 5
+    },
+    "parse_retry_enabled": {
+        "description": "启用解析请求重试",
+        "hint": "开启后，解析阶段 API 请求失败会自动重试。B 站凭证过期 (-101) 会跳过重试直接提示登录",
+        "type": "bool",
+        "default": true
+    },
+    "parse_retry_immediate": {
+        "description": "解析重试立即执行",
+        "hint": "关闭后按 0.2s / 0.5s / 1.0s 固定退避重试；开启后失败立即重试不等待",
+        "type": "bool",
+        "default": false
+    },
+    "parse_retry_count": {
+        "description": "解析重试次数",
+        "hint": "解析阶段 API 失败时的最大重试次数（不含首次），最大不超过 5",
+        "type": "int",
+        "slider": {
+            "min": 1,
+            "max": 5,
+            "step": 1
+        },
+        "default": 3
+    },
+    "card_render_disabled": {
+        "description": "跳过所有卡片渲染",
+        "hint": "开启后所有卡片渲染流程被完全跳过，所有解析结果统一以纯文本格式发送。优先级最高",
+        "type": "bool",
+        "default": false
+    },
+    "card_render_retry_enabled": {
+        "description": "启用封面图重试",
+        "hint": "开启后，封面图下载失败会按配置次数重试",
+        "type": "bool",
+        "default": true
+    },
+    "card_render_retry_count": {
+        "description": "封面图重试次数",
+        "hint": "封面图下载失败的最大重试次数（不含首次），最大不超过 5",
+        "type": "int",
+        "slider": {
+            "min": 1,
+            "max": 5,
+            "step": 1
+        },
+        "default": 2
+    },
+    "card_render_retry_delay": {
+        "description": "封面图重试等待时间（秒）",
+        "hint": "封面图重试之间的等待时间",
+        "type": "float",
+        "slider": {
+            "min": 0.3,
+            "max": 2,
+            "step": 0.1
+        },
+        "default": 0.5
+    },
+    "card_render_fallback_mode": {
+        "description": "封面图失败降级模式",
+        "hint": "placeholder=使用默认占位图；skip=跳过封面区域；text_only=放弃卡片降级为纯文本",
+        "type": "string",
+        "options": [
+            "placeholder",
+            "skip",
+            "text_only"
+        ],
+        "default": "placeholder"
+    },
+    "card_placeholder_image": {
+        "description": "封面占位图路径",
+        "hint": "占位图路径，支持绝对路径或相对插件数据目录的路径。留空使用插件自带 logo.png",
+        "type": "string",
+        "default": "logo.png"
+    },
+    "range_download_resume_enabled": {
+        "description": "启用分块下载断点续传",
+        "hint": "开启后，分块下载中断时会保留临时文件，下次下载从已下载位置继续",
+        "type": "bool",
+        "default": true
+    },
+    "common_timeout": {
+        "description": "普通请求超时时间",
+        "hint": "普通请求超时时间，单位秒。用于一些普通的请求 ",
+        "type": "int",
+        "slider": {
+            "min": 5,
+            "max": 60,
+            "step": 1
+        },
+        "default": 15
+    },
+    "proxy": {
+        "description": "代理地址",
+        "hint": "如 http://127.0.0.1:7890, 留空则直连。配置代理地址后, 请在各个解析器中再配置是否使用代理",
+        "type": "string",
+        "default": ""
+    },
+    "clean_cron": {
+        "description": "自动清理缓存的触发周期",
+        "hint": "使用 Cron 表达式（分 时 日 月 周）定义。例如：“30 2 * * *” 表示每天 2:30 。留空表示禁用自动清理",
+        "type": "string",
+        "default": "30 2 * * *"
+    },
+    "group_overrides": {
+        "description": "群覆盖配置",
+        "hint": "为指定群（填写群号）单独覆盖部分主配置。仅在群聊中生效",
+        "type": "template_list",
+        "templates": {
+            "group": {
+                "name": "群配置",
+                "items": {
+                    "group_id": {
+                        "description": "群号",
+                        "hint": "要覆盖配置的群号",
+                        "type": "string",
+                        "default": ""
+                    },
+                    "link_debounce_strategy": {
+                        "description": "链接防抖触发策略",
+                        "hint": "skip=仅跳过解析；silent=完全静默不反应；tip=发送下方自定义提示文本",
+                        "type": "string",
+                        "options": [
+                            "skip",
+                            "silent",
+                            "tip"
+                        ],
+                        "default": ""
+                    },
+                    "link_debounce_tip_text": {
+                        "description": "链接防抖提示文本",
+                        "hint": "策略为 tip 时发送的文本，。可用占位符：{platform} {user_name} {user_id}",
+                        "type": "text",
+                        "default": ""
+                    },
+                    "enable": {
+                        "description": "在该群启用解析",
+                        "hint": "关闭后该群不触发解析",
+                        "type": "bool",
+                        "default": null
+                    },
+                    "detect_action": {
+                        "description": "识别到链接后的行为",
+                        "hint": "text=发送解析提示；emoji=贴表情；none=静默",
+                        "type": "string",
+                        "options": [
+                            "text",
+                            "emoji",
+                            "none"
+                        ],
+                        "default": ""
+                    },
+                    "send_parse_text": {
+                        "description": "发送解析文本",
+                        "hint": "是否在该群发送解析完成后的文本",
+                        "type": "bool",
+                        "default": null
+                    },
+                    "render_card": {
+                        "description": "渲染卡片",
+                        "hint": "是否在该群渲染简介卡片",
+                        "type": "bool",
+                        "default": null
+                    },
+                    "image_render_card": {
+                        "description": "纯图片内容渲染卡片",
+                        "hint": "是否在该群为纯图片内容渲染卡片",
+                        "type": "bool",
+                        "default": null
+                    },
+                    "single_heavy_render_card": {
+                        "description": "单条重媒体仍渲染卡片",
+                        "hint": "是否在该群为单一重媒体渲染预览卡片",
+                        "type": "bool",
+                        "default": null
+                    },
+                    "forward_threshold": {
+                        "description": "转发阈值",
+                        "hint": "该群解析结果消息段数达到阈值时合并转发，0=不合并",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 10,
+                            "step": 1
+                        },
+                        "default": null
+                    },
+                    "merge_parsing_tip": {
+                        "description": "解析提示合并为套娃",
+                        "type": "bool",
+                        "default": null
+                    },
+                    "merge_parse_text": {
+                        "description": "解析文本合并为套娃",
+                        "type": "bool",
+                        "default": null
+                    },
+                    "merge_quote_target": {
+                        "description": "合并套娃引用目标",
+                        "hint": "original=引用原链接；merged=不引用",
+                        "type": "string",
+                        "options": [
+                            "original",
+                            "merged"
+                        ],
+                        "default": ""
+                    },
+                    "quote_on_detect": {
+                        "description": "解析提示引用原链接",
+                        "type": "bool",
+                        "default": null
+                    },
+                    "at_after_parse": {
+                        "description": "解析完成后@用户",
+                        "type": "bool",
+                        "default": null
+                    },
+                    "at_after_parse_text": {
+                        "description": "解析完成后@用户的文本",
+                        "hint": "可用占位符：{platform} {title} {author} {user_name} {user_id}",
+                        "type": "text",
+                        "default": ""
+                    },
+                    "parsing_tip": {
+                        "description": "解析提示模板",
+                        "hint": "该群识别到链接后发送的提示文字，",
+                        "type": "text",
+                        "default": ""
+                    },
+                    "parse_text_template": {
+                        "description": "解析文本模板",
+                        "hint": "该群解析完成后发送的文本模板，",
+                        "type": "text",
+                        "default": ""
+                    },
+                    "perf_render_thread_pool": {
+                        "description": "线程池渲染",
+                        "type": "bool",
+                        "default": null
+                    },
+                    "perf_render_cache_enabled": {
+                        "description": "智能渲染缓存",
+                        "type": "bool",
+                        "default": null
+                    },
+                    "perf_render_cache_ttl": {
+                        "description": "渲染缓存 TTL（秒）",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 604800,
+                            "step": 3600
+                        },
+                        "default": null
+                    },
+                    "perf_render_cache_max_count": {
+                        "description": "渲染缓存最大数量",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 2000,
+                            "step": 50
+                        },
+                        "default": null
+                    },
+                    "perf_adaptive_download": {
+                        "description": "自适应下载并发",
+                        "type": "bool",
+                        "default": null
+                    },
+                    "perf_download_default_concurrency": {
+                        "description": "默认下载并发数",
+                        "type": "int",
+                        "slider": {
+                            "min": 1,
+                            "max": 20,
+                            "step": 1
+                        },
+                        "default": null
+                    },
+                    "perf_download_fail_threshold": {
+                        "description": "连续失败降级阈值",
+                        "type": "int",
+                        "slider": {
+                            "min": 1,
+                            "max": 10,
+                            "step": 1
+                        },
+                        "default": null
+                    },
+                    "perf_download_degrade_step": {
+                        "description": "每次降级减少并发数",
+                        "type": "int",
+                        "slider": {
+                            "min": 1,
+                            "max": 5,
+                            "step": 1
+                        },
+                        "default": null
+                    },
+                    "perf_download_min_concurrency": {
+                        "description": "最小下载并发数",
+                        "type": "int",
+                        "slider": {
+                            "min": 1,
+                            "max": 10,
+                            "step": 1
+                        },
+                        "default": null
+                    },
+                    "perf_download_recover_step": {
+                        "description": "每次恢复增加并发数",
+                        "type": "int",
+                        "slider": {
+                            "min": 1,
+                            "max": 5,
+                            "step": 1
+                        },
+                        "default": null
+                    },
+                    "perf_download_recover_interval": {
+                        "description": "并发恢复间隔（秒）",
+                        "type": "int",
+                        "slider": {
+                            "min": 10,
+                            "max": 600,
+                            "step": 10
+                        },
+                        "default": null
+                    },
+                    "download_concurrency_limit": {
+                        "description": "全局同时下载数上限",
+                        "type": "int",
+                        "slider": {
+                            "min": 1,
+                            "max": 20,
+                            "step": 1
+                        },
+                        "default": null
+                    },
+                    "download_delay_min": {
+                        "description": "下载请求间最小延迟（秒）",
+                        "type": "float",
+                        "slider": {
+                            "min": 0,
+                            "max": 1,
+                            "step": 0.05
+                        },
+                        "default": null
+                    },
+                    "download_delay_max": {
+                        "description": "下载请求间最大延迟（秒）",
+                        "type": "float",
+                        "slider": {
+                            "min": 0,
+                            "max": 2,
+                            "step": 0.05
+                        },
+                        "default": null
+                    },
+                    "download_batch_size": {
+                        "description": "小图片批量下载每批数量",
+                        "type": "int",
+                        "slider": {
+                            "min": 1,
+                            "max": 30,
+                            "step": 1
+                        },
+                        "default": null
+                    },
+                    "download_dynamic_concurrency": {
+                        "description": "动态调整下载并发数",
+                        "type": "bool",
+                        "default": null
+                    },
+                    "download_retry_wait_enabled": {
+                        "description": "下载重试等待开关",
+                        "type": "bool",
+                        "default": null
+                    },
+                    "download_retry_delay_base": {
+                        "description": "下载重试基础等待时间（秒）",
+                        "type": "float",
+                        "slider": {
+                            "min": 0.05,
+                            "max": 2,
+                            "step": 0.05
+                        },
+                        "default": null
+                    },
+                    "download_retry_delay_limit": {
+                        "description": "下载重试最大等待时间（秒）",
+                        "type": "float",
+                        "slider": {
+                            "min": 0.1,
+                            "max": 10,
+                            "step": 0.1
+                        },
+                        "default": null
+                    },
+                    "max_concurrent_tasks": {
+                        "description": "同时处理链接的最大任务数",
+                        "type": "int",
+                        "slider": {
+                            "min": 1,
+                            "max": 20,
+                            "step": 1
+                        },
+                        "default": null
+                    },
+                    "parse_retry_enabled": {
+                        "description": "启用解析请求重试",
+                        "type": "bool",
+                        "default": null
+                    },
+                    "parse_retry_immediate": {
+                        "description": "解析重试立即执行",
+                        "type": "bool",
+                        "default": null
+                    },
+                    "parse_retry_count": {
+                        "description": "解析重试次数",
+                        "type": "int",
+                        "slider": {
+                            "min": 1,
+                            "max": 5,
+                            "step": 1
+                        },
+                        "default": null
+                    },
+                    "card_render_disabled": {
+                        "description": "跳过所有卡片渲染",
+                        "type": "bool",
+                        "default": null
+                    },
+                    "card_render_retry_enabled": {
+                        "description": "启用封面图重试",
+                        "type": "bool",
+                        "default": null
+                    },
+                    "card_render_retry_count": {
+                        "description": "封面图重试次数",
+                        "type": "int",
+                        "slider": {
+                            "min": 1,
+                            "max": 5,
+                            "step": 1
+                        },
+                        "default": null
+                    },
+                    "card_render_retry_delay": {
+                        "description": "封面图重试等待时间（秒）",
+                        "type": "float",
+                        "slider": {
+                            "min": 0.3,
+                            "max": 2,
+                            "step": 0.1
+                        },
+                        "default": null
+                    },
+                    "card_render_fallback_mode": {
+                        "description": "封面图失败降级模式",
+                        "type": "string",
+                        "options": [
+                            "placeholder",
+                            "skip",
+                            "text_only"
+                        ],
+                        "default": ""
+                    },
+                    "card_placeholder_image": {
+                        "description": "封面占位图路径",
+                        "type": "string",
+                        "default": ""
+                    },
+                    "range_download_resume_enabled": {
+                        "description": "启用分块下载断点续传",
+                        "type": "bool",
+                        "default": null
+                    },
+                    "dns_prefetch_enabled": {
+                        "description": "DNS预解析",
+                        "type": "bool",
+                        "default": null
+                    },
+                    "cdn_prefetch_enabled": {
+                        "description": "CDN节点优选",
+                        "type": "bool",
+                        "default": null
+                    },
+                    "enable_range_download": {
+                        "description": "分块并发下载",
+                        "type": "bool",
+                        "default": null
+                    },
+                    "range_download_max_parts": {
+                        "description": "全局最大分块数上限",
+                        "type": "int",
+                        "slider": {
+                            "min": 2,
+                            "max": 16,
+                            "step": 1
+                        },
+                        "default": null
+                    },
+                    "range_memory_fallback_to_single": {
+                        "description": "内存不足回退单连接",
+                        "type": "bool",
+                        "default": null
+                    },
+                    "range_merge_threshold_mb": {
+                        "description": "内存合并阈值(MB)",
+                        "type": "int",
+                        "slider": {
+                            "min": 10,
+                            "max": 500,
+                            "step": 10
+                        },
+                        "default": null
+                    },
+                    "range_part_timeout": {
+                        "description": "单块下载超时(秒)",
+                        "type": "int",
+                        "slider": {
+                            "min": 10,
+                            "max": 120,
+                            "step": 5
+                        },
+                        "default": null
+                    },
+                    "range_total_timeout": {
+                        "description": "整体下载超时(秒)",
+                        "type": "int",
+                        "slider": {
+                            "min": 30,
+                            "max": 600,
+                            "step": 10
+                        },
+                        "default": null
+                    },
+                    "range_memory_adaptive": {
+                        "description": "分块下载内存自适应",
+                        "type": "bool",
+                        "default": null
+                    },
+                    "range_memory_reserve_percent": {
+                        "description": "内存保留比例(%)",
+                        "type": "int",
+                        "slider": {
+                            "min": 5,
+                            "max": 30,
+                            "step": 1
+                        },
+                        "default": null
+                    },
+                    "range_memory_auto_disable": {
+                        "description": "内存严重不足时自动关闭分块下载",
+                        "type": "bool",
+                        "default": null
+                    },
+                    "enable_streaming_compress": {
+                        "description": "流式压缩",
+                        "type": "bool",
+                        "default": null
+                    },
+                    "video_cache_enabled": {
+                        "description": "启用视频下载缓存",
+                        "type": "bool",
+                        "default": null
+                    },
+                    "video_cache_ttl": {
+                        "description": "视频缓存有效期(天)",
+                        "type": "int",
+                        "slider": {
+                            "min": 1,
+                            "max": 30,
+                            "step": 1
+                        },
+                        "default": null
+                    },
+                    "video_cache_max_count": {
+                        "description": "视频缓存最大文件数",
+                        "type": "int",
+                        "slider": {
+                            "min": 10,
+                            "max": 500,
+                            "step": 10
+                        },
+                        "default": null
+                    },
+                    "memory_monitor_enabled": {
+                        "description": "内存监控总开关",
+                        "type": "bool",
+                        "default": null
+                    },
+                    "memory_monitor_interval": {
+                        "description": "内存监控间隔(秒)",
+                        "type": "int",
+                        "slider": {
+                            "min": 5,
+                            "max": 300,
+                            "step": 5
+                        },
+                        "default": null
+                    },
+                    "memory_monitor_warning_threshold": {
+                        "description": "内存监控警告阈值(%)",
+                        "type": "int",
+                        "slider": {
+                            "min": 1,
+                            "max": 50,
+                            "step": 1
+                        },
+                        "default": null
+                    }
+                }
+            }
+        }
+    },
+    "parsers_template": {
+        "description": "解析器",
+        "type": "template_list",
+        "hint": "配置各个解析器, 没配置的解析器将不会被启用, 请勿添加相同的解析器",
+        "templates": {
+            "bilibili": {
+                "name": "B站解析器",
+                "items": {
+                    "enable": {
+                        "description": "启用",
+                        "type": "bool",
+                        "default": true
+                    },
+                    "download_concurrency": {
+                        "description": "下载并发数",
+                        "hint": "该平台的下载并发数，0 表示使用全局默认并发",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 20,
+                            "step": 1
+                        },
+                        "default": 0
+                    },
+                    "use_proxy": {
+                        "description": "使用代理",
+                        "type": "bool",
+                        "default": false
+                    },
+                    "cookies": {
+                        "description": "Cookies",
+                        "hint": "选填",
+                        "type": "text",
+                        "default": ""
+                    },
+                    "video_codec_list": {
+                        "description": "B站视频编码",
+                        "hint": "优先下载的编码类型，可选：AVC、AV1、HEV。失败时会按列表依次回退",
+                        "type": "list",
+                        "items": {},
+                        "options": [
+                            "AVC",
+                            "AV1",
+                            "HEV"
+                        ],
+                        "default": [
+                            "AVC",
+                            "AV1",
+                            "HEV"
+                        ]
+                    },
+                    "video_quality": {
+                        "description": "B站视频分辨率",
+                        "hint": "下载B站视频的分辨率, 高画质可能需要登录才能下载成功",
+                        "type": "string",
+                        "options": [
+                            "_360P",
+                            "_480P",
+                            "_720P",
+                            "_1080P",
+                            "_1080P_PLUS",
+                            "_1080P_60",
+                            "_4K",
+                            "HDR",
+                            "DOLBY",
+                            "_8K",
+                            "AI_REPAIR"
+                        ],
+                        "labels": [
+                            "360P 流畅",
+                            "480P 标清",
+                            "720P 高清",
+                            "1080P 全高清",
+                            "1080P+ 增强版",
+                            "1080P 60帧",
+                            "4K 超高清",
+                            "HDR 高动态范围",
+                            "杜比视界 Dolby Vision",
+                            "8K 超高清",
+                            "AI修复"
+                        ],
+                        "default": "_720P"
+                    },
+                    "range_download_max_parts": {
+                        "description": "该平台最大分块数上限",
+                        "hint": "覆盖全局最大分块数上限，0表示使用全局值",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 16,
+                            "step": 1
+                        },
+                        "default": 0
+                    }
+                }
+            },
+            "douyin": {
+                "name": "抖音解析器",
+                "items": {
+                    "enable": {
+                        "description": "启用",
+                        "type": "bool",
+                        "default": true
+                    },
+                    "download_concurrency": {
+                        "description": "下载并发数",
+                        "hint": "该平台的下载并发数，0 表示使用全局默认并发",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 20,
+                            "step": 1
+                        },
+                        "default": 0
+                    },
+                    "use_proxy": {
+                        "description": "使用代理",
+                        "type": "bool",
+                        "default": false
+                    },
+                    "cookies": {
+                        "description": "Cookies",
+                        "hint": "选填",
+                        "type": "text",
+                        "default": ""
+                    },
+                    "range_download_max_parts": {
+                        "description": "该平台最大分块数上限",
+                        "hint": "覆盖全局最大分块数上限，0表示使用全局值",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 16,
+                            "step": 1
+                        },
+                        "default": 0
+                    }
+                }
+            },
+            "kuaishou": {
+                "name": "快手解析器",
+                "items": {
+                    "enable": {
+                        "description": "启用",
+                        "type": "bool",
+                        "default": true
+                    },
+                    "download_concurrency": {
+                        "description": "下载并发数",
+                        "hint": "该平台的下载并发数，0 表示使用全局默认并发",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 20,
+                            "step": 1
+                        },
+                        "default": 0
+                    },
+                    "use_proxy": {
+                        "description": "使用代理",
+                        "type": "bool",
+                        "default": false
+                    },
+                    "cookies": {
+                        "description": "Cookies",
+                        "hint": "选填",
+                        "type": "text",
+                        "default": ""
+                    },
+                    "live_photo_enabled": {
+                        "description": "实况图解析",
+                        "hint": "开启后，快手实况图(动态图)会通过聚合解析接口换取实况视频，与静态图一起发送；接口失败时自动降级为仅发送静态图，不影响正常解析",
+                        "type": "bool",
+                        "default": true
+                    },
+                    "live_photo_send_image": {
+                        "description": "实况图同时发送静态图",
+                        "hint": "开启后，图集中静态图片条目会以图片消息发送；关闭后静态条目跳过。实况条目由下方「实况图直接出视频」开关控制",
+                        "type": "bool",
+                        "default": true
+                    },
+                    "live_photo_send_video": {
+                        "description": "实况图直接出视频",
+                        "hint": "开启后，图集中的实况条目直接以视频消息发送(按图集原始顺序与静态图交错排列)；关闭后实况条目降级为发送静态图。作者混搭上传静态+实况图片时效果最佳",
+                        "type": "bool",
+                        "default": true
+                    },
+                    "live_photo_api": {
+                        "description": "实况图解析接口",
+                        "hint": "用于换取快手实况视频直链的聚合解析接口模板，{url} 为分享链接占位符。支持每行填写一个接口，按顺序尝试，第一个返回实况直链的生效；接口不可用会自动换下一个，全部失败时实况图降级为静态图。默认使用公共免费接口(api.bugpk.com)，担心单点故障可自行追加其他支持快手实况的接口",
+                        "type": "string",
+                        "default": "https://api.bugpk.com/api/ksjx?url={url}"
+                    },
+                    "live_photo_native_url": {
+                        "description": "实况图原生代发服务(可选)",
+                        "hint": "ks_live_server 服务地址(如 http://192.168.x.x:8765)。由 mitmproxy + 模拟器快手 App 深链签名驱动，实况数据与 App 完全一致，彻底不依赖三方解析接口。留空则不启用；服务不可达或超时(8s)时自动回落到上方三方接口链",
+                        "type": "string",
+                        "default": ""
+                    },
+                    "range_download_max_parts": {
+                        "description": "该平台最大分块数上限",
+                        "hint": "覆盖全局最大分块数上限，0表示使用全局值",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 16,
+                            "step": 1
+                        },
+                        "default": 0
+                    }
+                }
+            },
+            "shipinhao": {
+                "name": "微信视频号解析器",
+                "items": {
+                    "enable": {
+                        "description": "启用",
+                        "type": "bool",
+                        "default": true
+                    },
+                    "download_concurrency": {
+                        "description": "下载并发数",
+                        "hint": "该平台的下载并发数，0 表示使用全局默认并发",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 20,
+                            "step": 1
+                        },
+                        "default": 0
+                    },
+                    "use_proxy": {
+                        "description": "使用代理",
+                        "type": "bool",
+                        "default": false
+                    },
+                    "cookies": {
+                        "description": "腾讯元宝 Cookie",
+                        "hint": "解析视频号视频必填：登录 yuanbao.tencent.com 后复制其 Cookie 粘贴于此（借元宝登录态换取视频直链）",
+                        "type": "text",
+                        "default": ""
+                    },
+                    "range_download_max_parts": {
+                        "description": "该平台最大分块数上限",
+                        "hint": "覆盖全局最大分块数上限，0表示使用全局值",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 16,
+                            "step": 1
+                        },
+                        "default": 0
+                    }
+                }
+            },
+            "weibo": {
+                "name": "微博解析器",
+                "items": {
+                    "enable": {
+                        "description": "启用",
+                        "type": "bool",
+                        "default": true
+                    },
+                    "download_concurrency": {
+                        "description": "下载并发数",
+                        "hint": "该平台的下载并发数，0 表示使用全局默认并发",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 20,
+                            "step": 1
+                        },
+                        "default": 0
+                    },
+                    "use_proxy": {
+                        "description": "使用代理",
+                        "type": "bool",
+                        "default": false
+                    },
+                    "cookies": {
+                        "description": "Cookies",
+                        "hint": "选填",
+                        "type": "text",
+                        "default": ""
+                    },
+                    "range_download_max_parts": {
+                        "description": "该平台最大分块数上限",
+                        "hint": "覆盖全局最大分块数上限，0表示使用全局值",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 16,
+                            "step": 1
+                        },
+                        "default": 0
+                    }
+                }
+            },
+            "xhs": {
+                "name": "小红书解析器",
+                "items": {
+                    "enable": {
+                        "description": "启用",
+                        "type": "bool",
+                        "default": true
+                    },
+                    "download_concurrency": {
+                        "description": "下载并发数",
+                        "hint": "该平台的下载并发数，0 表示使用全局默认并发",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 20,
+                            "step": 1
+                        },
+                        "default": 0
+                    },
+                    "use_proxy": {
+                        "description": "使用代理",
+                        "type": "bool",
+                        "default": false
+                    },
+                    "cookies": {
+                        "description": "Cookies",
+                        "hint": "选填, 小红书部分链接解析有水印, 填充Cookies可去除水印",
+                        "type": "text",
+                        "default": ""
+                    },
+                    "range_download_max_parts": {
+                        "description": "该平台最大分块数上限",
+                        "hint": "覆盖全局最大分块数上限，0表示使用全局值",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 16,
+                            "step": 1
+                        },
+                        "default": 0
+                    }
+                }
+            },
+            "xiaoheihe": {
+                "name": "小黑盒解析器",
+                "items": {
+                    "enable": {
+                        "description": "启用",
+                        "type": "bool",
+                        "default": true
+                    },
+                    "download_concurrency": {
+                        "description": "下载并发数",
+                        "hint": "该平台的下载并发数，0 表示使用全局默认并发",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 20,
+                            "step": 1
+                        },
+                        "default": 0
+                    },
+                    "use_proxy": {
+                        "description": "使用代理",
+                        "type": "bool",
+                        "default": false
+                    },
+                    "cookies": {
+                        "description": "Cookies",
+                        "hint": "选填",
+                        "type": "text",
+                        "default": ""
+                    },
+                    "show_body_text": {
+                        "description": "显示正文内容",
+                        "hint": "开启后，小黑盒帖子的正文将作为独立文本消息参与发送或合并转发。",
+                        "type": "bool",
+                        "default": true
+                    },
+                    "video_send_mode": {
+                        "description": "视频发送模式",
+                        "hint": "仅影响小黑盒视频：不发送视频、只发送第一个视频、发送全部视频。",
+                        "type": "string",
+                        "default": "first",
+                        "options": [
+                            "none",
+                            "first",
+                            "all"
+                        ]
+                    },
+                    "range_download_max_parts": {
+                        "description": "该平台最大分块数上限",
+                        "hint": "覆盖全局最大分块数上限，0表示使用全局值",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 16,
+                            "step": 1
+                        },
+                        "default": 0
+                    }
+                }
+            },
+            "zhihu": {
+                "name": "知乎解析器",
+                "items": {
+                    "enable": {
+                        "description": "启用",
+                        "type": "bool",
+                        "default": true
+                    },
+                    "download_concurrency": {
+                        "description": "下载并发数",
+                        "hint": "该平台的下载并发数，0 表示使用全局默认并发",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 20,
+                            "step": 1
+                        },
+                        "default": 0
+                    },
+                    "use_proxy": {
+                        "description": "使用代理",
+                        "type": "bool",
+                        "default": false
+                    },
+                    "cookies": {
+                        "description": "Cookies",
+                        "hint": "必填! 否则无法解析知乎内容",
+                        "type": "text",
+                        "default": ""
+                    },
+                    "range_download_max_parts": {
+                        "description": "该平台最大分块数上限",
+                        "hint": "覆盖全局最大分块数上限，0表示使用全局值",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 16,
+                            "step": 1
+                        },
+                        "default": 0
+                    }
+                }
+            },
+            "tiktok": {
+                "name": "Tiktok 解析器",
+                "items": {
+                    "enable": {
+                        "description": "启用",
+                        "type": "bool",
+                        "default": true
+                    },
+                    "download_concurrency": {
+                        "description": "下载并发数",
+                        "hint": "该平台的下载并发数，0 表示使用全局默认并发",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 20,
+                            "step": 1
+                        },
+                        "default": 0
+                    },
+                    "use_proxy": {
+                        "description": "使用代理",
+                        "type": "bool",
+                        "default": true
+                    },
+                    "cookies": {
+                        "description": "Cookies",
+                        "hint": "选填",
+                        "type": "text",
+                        "default": ""
+                    },
+                    "range_download_max_parts": {
+                        "description": "该平台最大分块数上限",
+                        "hint": "覆盖全局最大分块数上限，0表示使用全局值",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 16,
+                            "step": 1
+                        },
+                        "default": 0
+                    }
+                }
+            },
+            "youtube": {
+                "name": "YouTube 解析器",
+                "items": {
+                    "enable": {
+                        "description": "启用",
+                        "type": "bool",
+                        "default": true
+                    },
+                    "download_concurrency": {
+                        "description": "下载并发数",
+                        "hint": "该平台的下载并发数，0 表示使用全局默认并发",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 20,
+                            "step": 1
+                        },
+                        "default": 0
+                    },
+                    "use_proxy": {
+                        "description": "使用代理",
+                        "type": "bool",
+                        "default": true
+                    },
+                    "cookies": {
+                        "description": "Cookies",
+                        "hint": "必填! 同时注意油管Cookie有效期较短",
+                        "type": "text",
+                        "default": ""
+                    },
+                    "range_download_max_parts": {
+                        "description": "该平台最大分块数上限",
+                        "hint": "覆盖全局最大分块数上限，0表示使用全局值",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 16,
+                            "step": 1
+                        },
+                        "default": 0
+                    }
+                }
+            },
+            "instagram": {
+                "name": "Instagram 解析器",
+                "items": {
+                    "enable": {
+                        "description": "启用",
+                        "type": "bool",
+                        "default": true
+                    },
+                    "download_concurrency": {
+                        "description": "下载并发数",
+                        "hint": "该平台的下载并发数，0 表示使用全局默认并发",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 20,
+                            "step": 1
+                        },
+                        "default": 0
+                    },
+                    "use_proxy": {
+                        "description": "使用代理",
+                        "type": "bool",
+                        "default": true
+                    },
+                    "cookies": {
+                        "description": "Cookies",
+                        "hint": "必填",
+                        "type": "text",
+                        "default": ""
+                    },
+                    "range_download_max_parts": {
+                        "description": "该平台最大分块数上限",
+                        "hint": "覆盖全局最大分块数上限，0表示使用全局值",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 16,
+                            "step": 1
+                        },
+                        "default": 0
+                    }
+                }
+            },
+            "twitter": {
+                "name": "Twitter 解析器",
+                "items": {
+                    "enable": {
+                        "description": "启用",
+                        "type": "bool",
+                        "default": true
+                    },
+                    "download_concurrency": {
+                        "description": "下载并发数",
+                        "hint": "该平台的下载并发数，0 表示使用全局默认并发",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 20,
+                            "step": 1
+                        },
+                        "default": 0
+                    },
+                    "use_proxy": {
+                        "description": "使用代理",
+                        "type": "bool",
+                        "default": true
+                    },
+                    "cookies": {
+                        "description": "Cookies",
+                        "hint": "选填",
+                        "type": "text",
+                        "default": ""
+                    },
+                    "range_download_max_parts": {
+                        "description": "该平台最大分块数上限",
+                        "hint": "覆盖全局最大分块数上限，0表示使用全局值",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 16,
+                            "step": 1
+                        },
+                        "default": 0
+                    }
+                }
+            },
+            "acfun": {
+                "name": "A站解析器",
+                "items": {
+                    "enable": {
+                        "description": "启用",
+                        "type": "bool",
+                        "default": true
+                    },
+                    "download_concurrency": {
+                        "description": "下载并发数",
+                        "hint": "该平台的下载并发数，0 表示使用全局默认并发",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 20,
+                            "step": 1
+                        },
+                        "default": 0
+                    },
+                    "use_proxy": {
+                        "description": "使用代理",
+                        "type": "bool",
+                        "default": false
+                    },
+                    "cookies": {
+                        "description": "Cookies",
+                        "hint": "选填",
+                        "type": "text",
+                        "default": ""
+                    },
+                    "range_download_max_parts": {
+                        "description": "该平台最大分块数上限",
+                        "hint": "覆盖全局最大分块数上限，0表示使用全局值",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 16,
+                            "step": 1
+                        },
+                        "default": 0
+                    }
+                }
+            },
+            "ncm": {
+                "name": "网易云解析器",
+                "items": {
+                    "enable": {
+                        "description": "启用",
+                        "type": "bool",
+                        "default": true
+                    },
+                    "download_concurrency": {
+                        "description": "下载并发数",
+                        "hint": "该平台的下载并发数，0 表示使用全局默认并发",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 20,
+                            "step": 1
+                        },
+                        "default": 0
+                    },
+                    "use_proxy": {
+                        "description": "使用代理",
+                        "type": "bool",
+                        "default": false
+                    },
+                    "cookies": {
+                        "description": "Cookies",
+                        "hint": "选填",
+                        "type": "text",
+                        "default": ""
+                    },
+                    "range_download_max_parts": {
+                        "description": "该平台最大分块数上限",
+                        "hint": "覆盖全局最大分块数上限，0表示使用全局值",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 16,
+                            "step": 1
+                        },
+                        "default": 0
+                    }
+                }
+            },
+            "nga": {
+                "name": "NGA解析器",
+                "items": {
+                    "enable": {
+                        "description": "启用",
+                        "type": "bool",
+                        "default": true
+                    },
+                    "download_concurrency": {
+                        "description": "下载并发数",
+                        "hint": "该平台的下载并发数，0 表示使用全局默认并发",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 20,
+                            "step": 1
+                        },
+                        "default": 0
+                    },
+                    "use_proxy": {
+                        "description": "使用代理",
+                        "type": "bool",
+                        "default": false
+                    },
+                    "cookies": {
+                        "description": "Cookies",
+                        "hint": "选填",
+                        "type": "text",
+                        "default": ""
+                    },
+                    "range_download_max_parts": {
+                        "description": "该平台最大分块数上限",
+                        "hint": "覆盖全局最大分块数上限，0表示使用全局值",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 16,
+                            "step": 1
+                        },
+                        "default": 0
+                    }
+                }
+            },
+            "iwara": {
+                "name": "Iwara解析器",
+                "items": {
+                    "enable": {
+                        "description": "启用",
+                        "type": "bool",
+                        "default": true
+                    },
+                    "download_concurrency": {
+                        "description": "下载并发数",
+                        "hint": "该平台的下载并发数，0 表示使用全局默认并发",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 20,
+                            "step": 1
+                        },
+                        "default": 0
+                    },
+                    "use_proxy": {
+                        "description": "使用代理",
+                        "type": "bool",
+                        "default": false
+                    },
+                    "cookies": {
+                        "description": "Cookies",
+                        "hint": "选填",
+                        "type": "text",
+                        "default": ""
+                    },
+                    "video_quality": {
+                        "description": "Iwara视频分辨率",
+                        "hint": "下载Iwara视频的分辨率",
+                        "type": "string",
+                        "options": [
+                            "360",
+                            "540",
+                            "preview",
+                            "Source"
+                        ],
+                        "labels": [
+                            "360P",
+                            "540P",
+                            "Preview",
+                            "原画"
+                        ],
+                        "default": "Source"
+                    },
+                    "nsfw": {
+                        "description": "R18 视频处理方式",
+                        "type": "string",
+                        "options": [
+                            "send",
+                            "blur",
+                            "ignore"
+                        ],
+                        "labels": [
+                            "正常发送",
+                            "模糊处理后发送",
+                            "忽略"
+                        ],
+                        "default": "模糊处理后发送"
+                    },
+                    "range_download_max_parts": {
+                        "description": "该平台最大分块数上限",
+                        "hint": "覆盖全局最大分块数上限，0表示使用全局值",
+                        "type": "int",
+                        "slider": {
+                            "min": 0,
+                            "max": 16,
+                            "step": 1
+                        },
+                        "default": 0
+                    }
+                }
+            }
+        }
+    }
+}

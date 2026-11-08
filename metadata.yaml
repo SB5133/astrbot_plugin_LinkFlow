@@ -1,0 +1,7 @@
+name: astrbot_plugin_LinkFlow
+display_name: LinkFlow
+desc: 全能链接解析器：视频、图集、音频一网打尽，支持 B 站、抖音、小红书、快手、微博、知乎、YouTube、TikTok 等十余个平台。
+help: 略
+author: SB5133
+version: v2.0.0
+repo: https://github.com/SB5133/astrbot_plugin_LinkFlow

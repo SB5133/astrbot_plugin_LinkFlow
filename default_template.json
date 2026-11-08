@@ -1,0 +1,47 @@
+[
+  {
+    "__template_key": "bilibili",
+    "enable": true,
+    "use_proxy": false,
+    "cookies": "",
+    "video_codecs": "AVC",
+    "video_quality": "_720P"
+  },
+  {
+    "__template_key": "douyin",
+    "enable": true,
+    "use_proxy": false,
+    "cookies": ""
+  },
+  {
+    "__template_key": "kuaishou",
+    "enable": true,
+    "use_proxy": false,
+    "cookies": "",
+    "live_photo_enabled": true,
+    "live_photo_send_image": true,
+    "live_photo_send_video": true,
+    "live_photo_api": "https://api.bugpk.com/api/ksjx?url={url}",
+    "live_photo_native_url": ""
+  },
+  {
+    "__template_key": "weibo",
+    "enable": true,
+    "use_proxy": false,
+    "cookies": ""
+  },
+  {
+    "__template_key": "xhs",
+    "enable": true,
+    "use_proxy": false,
+    "cookies": ""
+  },
+  {
+    "__template_key": "xiaoheihe",
+    "enable": true,
+    "use_proxy": false,
+    "cookies": "",
+    "show_body_text": true,
+    "video_send_mode": "first"
+  }
+]

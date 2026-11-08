@@ -1,0 +1,23 @@
+# 文本文件统一 LF
+# 原因: Windows 上 core.autocrlf=true 会把 LF 转成 CRLF,
+# 提交后拉下来就是 CRLF, 与 Linux 容器内的运行环境不一致。
+*.py    text eol=lf
+*.md    text eol=lf
+*.yaml  text eol=lf
+*.yml   text eol=lf
+*.json  text eol=lf
+*.txt   text eol=lf
+*.cfg   text eol=lf
+*.toml  text eol=lf
+
+# 二进制资源, 不做行尾转换
+*.ttf   binary
+*.otf   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.webp  binary
+*.gif   binary
+*.mp4   binary
+*.kvif  binary
+*.webm  binary
